@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SISPRES · Sistema de Presenças da Universidade</title>
+<style>
+  :root{
+    --azul:#0b2545;
+    --azul2:#13315c;
+    --dourado:#c9a24b;
+    --dourado-claro:#e6cf8a;
+    --bg:#f4f6fa;
+    --branco:#ffffff;
+    --texto:#1c2530;
+    --verde:#1e8f5f;
+    --vermelho:#c0392b;
+    --amarelo:#c98a1f;
+    --cinza:#6b7684;
+    --borda:#dfe4ec;
+    --radius:12px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--texto);}
+  a{color:inherit;}
+  header.topo{
+    background:linear-gradient(120deg,var(--azul),var(--azul2));
+    color:#fff;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;
+    box-shadow:0 2px 10px rgba(0,0,0,.15);
+  }
+  header.topo .brand{display:flex;align-items:center;gap:12px;}
+  header.topo .brand .escudo{
+    width:42px;height:42px;border-radius:50%;background:var(--dourado);
+    display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--azul);font-size:18px;
+  }
+  header.topo h1{font-size:18px;margin:0;letter-spacing:.5px;}
+  header.topo small{opacity:.8;display:block;font-size:11px;}
+  header.topo .userbox{font-size:13px;display:flex;align-items:center;gap:12px;}
+  header.topo button.sair{
+    background:transparent;border:1px solid var(--dourado);color:var(--dourado);
+    padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px;
+  }
+  header.topo button.sair:hover{background:var(--dourado);color:var(--azul);}
+
+  main{max-width:1080px;margin:0 auto;padding:28px 20px 60px;}
+  .card{background:var(--branco);border-radius:var(--radius);padding:24px;box-shadow:0 2px 12px rgba(20,30,60,.06);margin-bottom:20px;border:1px solid var(--borda);}
+  .card h2{margin-top:0;color:var(--azul);font-size:19px;border-left:4px solid var(--dourado);padding-left:10px;}
+  .card h3{color:var(--azul2);font-size:15px;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+  @media(max-width:700px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+  label{display:block;font-size:13px;color:var(--cinza);margin:10px 0 4px;font-weight:600;}
+  input,select,textarea{
+    width:100%;padding:10px 12px;border:1px solid var(--borda);border-radius:8px;font-size:14px;
+    background:#fbfcfe;
+  }
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul2);}
+
+  button{
+    cursor:pointer;border:none;border-radius:8px;padding:10px 18px;font-size:14px;font-weight:600;
+    background:var(--azul);color:#fff;transition:.15s;
+  }
+  button:hover{background:var(--azul2);}
+  button.dourado{background:var(--dourado);color:var(--azul);}
+  button.dourado:hover{background:var(--dourado-claro);}
+  button.outline{background:transparent;color:var(--azul);border:1px solid var(--azul);}
+  button.outline:hover{background:var(--azul);color:#fff;}
+  button.perigo{background:var(--vermelho);}
+  button.perigo:hover{background:#a02c1f;}
+  button.pequeno{padding:5px 10px;font-size:12px;}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+
+  .tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+  .tabs button{background:#e9edf5;color:var(--azul2);}
+  .tabs button.ativo{background:var(--azul);color:#fff;}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--borda);}
+  th{color:var(--cinza);font-size:12px;text-transform:uppercase;letter-spacing:.4px;}
+
+  .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;display:inline-block;}
+  .badge.presente{background:#e3f6ec;color:var(--verde);}
+  .badge.atrasado{background:#fdf1de;color:var(--amarelo);}
+  .badge.ausente{background:#fbe9e7;color:var(--vermelho);}
+  .badge.pendente{background:#eef0f4;color:var(--cinza);}
+  .badge.normal{background:#e3f6ec;color:var(--verde);}
+  .badge.adiada{background:#fdf1de;color:var(--amarelo);}
+  .badge.cancelada{background:#fbe9e7;color:var(--vermelho);}
+
+  .msg{padding:10px 14px;border-radius:8px;font-size:13px;margin:10px 0;}
+  .msg.erro{background:#fbe9e7;color:var(--vermelho);}
+  .msg.sucesso{background:#e3f6ec;color:var(--verde);}
+
+  .login-wrap{max-width:420px;margin:60px auto;}
+  .login-wrap .escudo-grande{
+    width:64px;height:64px;border-radius:50%;background:var(--dourado);margin:0 auto 14px;
+    display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--azul);font-size:26px;
+  }
+  .login-wrap h1{text-align:center;color:var(--azul);font-size:22px;margin-bottom:4px;}
+  .login-wrap p.sub{text-align:center;color:var(--cinza);margin-top:0;font-size:13px;margin-bottom:22px;}
+
+  .role-switch{display:flex;background:#e9edf5;border-radius:10px;padding:4px;margin-bottom:18px;}
+  .role-switch button{flex:1;background:transparent;color:var(--azul2);padding:8px;font-size:13px;}
+  .role-switch button.ativo{background:var(--azul);color:#fff;}
+
+  .lista-turmas{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:700px){.lista-turmas{grid-template-columns:1fr;}}
+  .turma-card{
+    border:1px solid var(--borda);border-radius:10px;padding:16px;cursor:pointer;transition:.15s;background:#fbfcfe;
+  }
+  .turma-card:hover{border-color:var(--azul2);box-shadow:0 2px 10px rgba(20,30,60,.08);}
+  .turma-card h4{margin:0 0 4px;color:var(--azul);}
+  .turma-card .meta{font-size:12px;color:var(--cinza);}
+  .codigo{
+    display:inline-block;background:var(--azul);color:var(--dourado-claro);font-family:monospace;
+    padding:3px 9px;border-radius:6px;font-size:13px;letter-spacing:1px;
+  }
+
+  .stat-box{background:#f7f9fc;border-radius:10px;padding:14px;text-align:center;border:1px solid var(--borda);}
+  .stat-box .num{font-size:26px;font-weight:800;color:var(--azul);}
+  .stat-box .lbl{font-size:11px;color:var(--cinza);text-transform:uppercase;}
+
+  .voltar{background:none;color:var(--azul2);padding:0;margin-bottom:14px;font-size:13px;text-decoration:underline;}
+  .voltar:hover{background:none;color:var(--azul);}
+
+  .config-api{
+    background:#fff8e6;border:1px solid var(--dourado-claro);border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:18px;
+  }
+  .horario-linha{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .horario-linha select,.horario-linha input{flex:1;}
+  footer.rodape{text-align:center;color:var(--cinza);font-size:12px;padding:20px;}
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="brand">
+    <div class="escudo">UN</div>
+    <div>
+      <h1>SISPRES — Sistema de Presenças</h1>
+      <small>Universidade · Controlo de Presenças em Sala de Aula</small>
+    </div>
+  </div>
+  <div class="userbox" id="userbox" style="display:none;">
+    <span id="userNome"></span>
+    <button class="sair" onclick="sair()">Sair</button>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<footer class="rodape">SISPRES · Sistema de Presenças Universitário</footer>
+
+<script>
+/* ======================= CONFIGURAÇÃO ======================= */
+// Cole aqui o URL do "App da Web" gerado pelo Google Apps Script (termina em /exec)
+const API_URL = "COLE_AQUI_O_URL_DO_SEU_APPS_SCRIPT";
+
+/* ======================= ESTADO ======================= */
+let sessao = JSON.parse(localStorage.getItem("sispres_sessao") || "null");
+let turmaAtualCache = null;
+let aulaSelecionadaId = null;
+
+/* ======================= API ======================= */
+async function api(action, payload = {}) {
+  if (API_URL.includes("COLE_AQUI")) {
+    alert("Configuração pendente: define o API_URL no topo do ficheiro index.html com o URL do teu Apps Script.");
+    throw new Error("API_URL não configurado");
+  }
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action, payload })
+  });
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error || "Erro desconhecido");
+  return json.data;
+}
+
+/* ======================= UTIL ======================= */
+function el(html) { const d = document.createElement("div"); d.innerHTML = html.trim(); return d.firstChild; }
+function fmtHorarios(horarios) {
+  const dias = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+  return horarios.map(h => `${dias[h.dia]} ${h.inicio}`).join(", ");
+}
+function badge(status) { return `<span class="badge ${status}">${status}</span>`; }
+function salvarSessao() { localStorage.setItem("sispres_sessao", JSON.stringify(sessao)); }
+function sair() { sessao = null; localStorage.removeItem("sispres_sessao"); render(); }
+function mostrarErro(container, msg) {
+  const div = el(`<div class="msg erro">${msg}</div>`);
+  container.prepend(div);
+  setTimeout(() => div.remove(), 4500);
+}
+function mostrarSucesso(container, msg) {
+  const div = el(`<div class="msg sucesso">${msg}</div>`);
+  container.prepend(div);
+  setTimeout(() => div.remove(), 4500);
+}
+
+/* ======================= RENDER PRINCIPAL ======================= */
+function render() {
+  const app = document.getElementById("app");
+  const userbox = document.getElementById("userbox");
+  app.innerHTML = "";
+
+  if (!sessao) {
+    userbox.style.display = "none";
+    app.appendChild(telaLogin());
+    return;
+  }
+
+  userbox.style.display = "flex";
+  document.getElementById("userNome").textContent =
+    sessao.tipo === "docente" ? `Prof(a). ${sessao.dados.nome}` :
+    sessao.tipo === "estudante" ? `${sessao.dados.nome} (${sessao.dados.numero})` :
+    "Administrador";
+
+  if (sessao.tipo === "docente") app.appendChild(painelDocente());
+  else if (sessao.tipo === "estudante") app.appendChild(painelEstudante());
+  else if (sessao.tipo === "admin") app.appendChild(painelAdmin());
+}
+
+/* ======================= LOGIN ======================= */
+function telaLogin() {
+  const wrap = el(`
+    <div class="login-wrap">
+      <div class="card">
+        <div class="escudo-grande">UN</div>
+        <h1>SISPRES</h1>
+        <p class="sub">Sistema de Presenças da Universidade</p>
+        <div class="role-switch">
+          <button data-r="docente" class="ativo">Docente</button>
+          <button data-r="estudante">Estudante</button>
+          <button data-r="admin">Administrador</button>
+        </div>
+        <div id="loginArea"></div>
+      </div>
+    </div>
+  `);
+
+  let modo = "docente";
+  const area = wrap.querySelector("#loginArea");
+  wrap.querySelectorAll(".role-switch button").forEach(b => {
+    b.onclick = () => {
+      wrap.querySelectorAll(".role-switch button").forEach(x => x.classList.remove("ativo"));
+      b.classList.add("ativo");
+      modo = b.dataset.r;
+      desenharFormLogin();
+    };
+  });
+
+  function desenharFormLogin() {
+    area.innerHTML = "";
+    if (modo === "docente") area.appendChild(formLoginDocente());
+    if (modo === "estudante") area.appendChild(formLoginEstudante());
+    if (modo === "admin") area.appendChild(formLoginAdmin());
+  }
+  desenharFormLogin();
+  return wrap;
+}
+
+function formLoginDocente() {
+  const div = el(`
+    <div>
+      <div id="msgs"></div>
+      <label>Email</label><input id="lEmail" type="email" placeholder="docente@universidade.ac.mz">
+      <label>Senha</label><input id="lSenha" type="password" placeholder="••••••••">
+      <button style="width:100%;margin-top:16px;" id="btnLogin">Entrar</button>
+      <p style="text-align:center;font-size:13px;margin-top:14px;">
+        Não tem conta? <a href="#" id="linkSignup" style="color:var(--azul2);font-weight:600;">Criar conta de docente</a>
+      </p>
+      <div id="signupArea"></div>
+    </div>
+  `);
+  const msgs = div.querySelector("#msgs");
+  div.querySelector("#btnLogin").onclick = async () => {
+    try {
+      const dados = await api("loginDocente", { email: div.querySelector("#lEmail").value, senha: div.querySelector("#lSenha").value });
+      sessao = { tipo: "docente", dados };
+      salvarSessao(); render();
+    } catch (e) { mostrarErro(div, e.message); }
+  };
+  div.querySelector("#linkSignup").onclick = (ev) => {
+    ev.preventDefault();
+    const sa = div.querySelector("#signupArea");
+    if (sa.innerHTML) { sa.innerHTML = ""; return; }
+    sa.appendChild(el(`
+      <div style="margin-top:14px;border-top:1px solid var(--borda);padding-top:14px;">
+        <label>Nome completo</label><input id="sNome" placeholder="Nome do docente">
+        <label>Email</label><input id="sEmail" type="email">
+        <label>Senha</label><input id="sSenha" type="password">
+        <button class="dourado" style="width:100%;margin-top:14px;" id="btnSignup">Criar conta</button>
+      </div>
+    `));
+    sa.querySelector("#btnSignup").onclick = async () => {
+      try {
+        await api("signupDocente", { nome: sa.querySelector("#sNome").value, email: sa.querySelector("#sEmail").value, senha: sa.querySelector("#sSenha").value });
+        mostrarSucesso(div, "Conta criada com sucesso! Já pode entrar.");
+        sa.innerHTML = "";
+      } catch (e) { mostrarErro(div, e.message); }
+    };
+  };
+  return div;
+}
+
+function formLoginEstudante() {
+  const div = el(`
+    <div>
+      <label>Código da turma</label><input id="eCodigo" placeholder="Ex: A1B2C3" style="text-transform:uppercase;">
+      <label>Número de estudante</label><input id="eNumero" placeholder="Nº fornecido pelo docente">
+      <label>Senha</label><input id="eSenha" type="password" placeholder="••••••••">
+      <button style="width:100%;margin-top:16px;" id="btnLoginEst">Entrar</button>
+      <p style="font-size:12px;color:var(--cinza);margin-top:10px;">A senha inicial é fornecida pelo seu docente (por defeito: 1234).</p>
+    </div>
+  `);
+  div.querySelector("#btnLoginEst").onclick = async () => {
+    try {
+      const dados = await api("loginEstudante", {
+        codigoAcesso: div.querySelector("#eCodigo").value.trim().toUpperCase(),
+        numero: div.querySelector("#eNumero").value.trim(),
+        senha: div.querySelector("#eSenha").value
+      });
+      sessao = { tipo: "estudante", dados };
+      salvarSessao(); render();
+    } catch (e) { mostrarErro(div, e.message); }
+  };
+  return div;
+}
+
+function formLoginAdmin() {
+  const div = el(`
+    <div>
+      <label>Email de administrador</label><input id="aEmail" type="email">
+      <label>Senha</label><input id="aSenha" type="password">
+      <button style="width:100%;margin-top:16px;" id="btnLoginAdmin">Entrar</button>
+    </div>
+  `);
+  div.querySelector("#btnLoginAdmin").onclick = async () => {
+    try {
+      const dados = await api("loginAdmin", { email: div.querySelector("#aEmail").value, senha: div.querySelector("#aSenha").value });
+      sessao = { tipo: "admin", dados };
+      salvarSessao(); render();
+    } catch (e) { mostrarErro(div, e.message); }
+  };
+  return div;
+}
+
+/* ======================= PAINEL DOCENTE ======================= */
+function painelDocente() {
+  const wrap = el(`<div id="painelDocenteRoot"></div>`);
+  carregarListaTurmas(wrap);
+  return wrap;
+}
+
+async function carregarListaTurmas(root) {
+  root.innerHTML = `<div class="card">A carregar turmas...</div>`;
+  try {
+    const turmas = await api("listTurmasDocente", { docenteId: sessao.dados.id });
+    root.innerHTML = "";
+    const card = el(`
+      <div class="card">
+        <h2>As Minhas Turmas</h2>
+        <div id="msgArea"></div>
+        <div class="lista-turmas" id="listaTurmas"></div>
+        <button class="dourado" style="margin-top:18px;" id="btnNovaTurma">+ Criar nova turma</button>
+        <div id="formNovaTurma"></div>
+      </div>
+    `);
+    root.appendChild(card);
+    const lista = card.querySelector("#listaTurmas");
+    if (turmas.length === 0) lista.innerHTML = `<p style="color:var(--cinza);">Ainda não criou nenhuma turma.</p>`;
+    turmas.forEach(t => {
+      const tc = el(`
+        <div class="turma-card">
+          <h4>${t.cadeira}</h4>
+          <div class="meta">Turma: ${t.nome}</div>
+          <div class="meta">${fmtHorarios(t.horarios)} · ${t.duracaoMin} min/aula</div>
+          <div class="meta">Código de acesso: <span class="codigo">${t.codigoAcesso}</span></div>
+        </div>
+      `);
+      tc.onclick = () => abrirTurmaDocente(root, t.id);
+      lista.appendChild(tc);
+    });
+    card.querySelector("#btnNovaTurma").onclick = () => {
+      const fa = card.querySelector("#formNovaTurma");
+      fa.innerHTML = "";
+      fa.appendChild(formCriarTurma(root));
+    };
+  } catch (e) {
+    root.innerHTML = `<div class="card"><div class="msg erro">${e.message}</div></div>`;
+  }
+}
+
+function formCriarTurma(root) {
+  const div = el(`
+    <div style="margin-top:18px;border-top:1px solid var(--borda);padding-top:18px;">
+      <h3>Nova Turma</h3>
+      <div class="grid2">
+        <div><label>Nome da turma</label><input id="fNome" placeholder="Ex: Informática 2ºAno - A"></div>
+        <div><label>Nome da cadeira</label><input id="fCadeira" placeholder="Ex: Estruturas de Dados e Algoritmos"></div>
+      </div>
+      <div class="grid2">
+        <div><label>Duração de cada aula (minutos)</label><input id="fDuracao" type="number" value="90"></div>
+        <div><label>Total de aulas previstas no semestre</label><input id="fTotal" type="number" value="30"></div>
+      </div>
+      <div class="grid2">
+        <div><label>Data de início das aulas</label><input id="fDataInicio" type="date"></div>
+        <div><label>Tolerância de atraso (minutos)</label><input id="fTolerancia" type="number" value="10"></div>
+      </div>
+      <label>Horário semanal das aulas</label>
+      <div id="horariosLista"></div>
+      <button type="button" class="outline pequeno" id="btnAddHorario">+ Adicionar dia/hora</button>
+      <div id="msgFormTurma"></div>
+      <button class="dourado" style="margin-top:16px;" id="btnCriarTurma">Criar Turma</button>
+      <button class="outline" style="margin-top:16px;margin-left:8px;" id="btnCancelarTurma">Cancelar</button>
+    </div>
+  `);
+  const horariosLista = div.querySelector("#horariosLista");
+  function addLinhaHorario() {
+    const linha = el(`
+      <div class="horario-linha">
+        <select class="diaSel">
+          <option value="1">Segunda</option><option value="2">Terça</option><option value="3">Quarta</option>
+          <option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option><option value="0">Domingo</option>
+        </select>
+        <input class="horaSel" type="time" value="08:00">
+        <button type="button" class="perigo pequeno" onclick="this.parentElement.remove()">Remover</button>
+      </div>
+    `);
+    horariosLista.appendChild(linha);
+  }
+  addLinhaHorario();
+  div.querySelector("#btnAddHorario").onclick = addLinhaHorario;
+  div.querySelector("#btnCancelarTurma").onclick = () => { div.remove(); };
+
+  div.querySelector("#btnCriarTurma").onclick = async () => {
+    try {
+      const horarios = Array.from(horariosLista.querySelectorAll(".horario-linha")).map(l => ({
+        dia: parseInt(l.querySelector(".diaSel").value, 10),
+        inicio: l.querySelector(".horaSel").value
+      }));
+      const payload = {
+        docenteId: sessao.dados.id,
+        nome: div.querySelector("#fNome").value,
+        cadeira: div.querySelector("#fCadeira").value,
+        duracaoMin: parseInt(div.querySelector("#fDuracao").value, 10),
+        totalAulas: parseInt(div.querySelector("#fTotal").value, 10),
+        dataInicio: div.querySelector("#fDataInicio").value,
+        toleranciaAtrasoMin: parseInt(div.querySelector("#fTolerancia").value, 10),
+        horarios
+      };
+      await api("createTurma", payload);
+      mostrarSucesso(div, "Turma criada com sucesso!");
+      setTimeout(() => carregarListaTurmas(root), 800);
+    } catch (e) { mostrarErro(div, e.message); }
+  };
+  return div;
+}
+
+async function abrirTurmaDocente(root, turmaId) {
+  root.innerHTML = `<div class="card">A carregar turma...</div>`;
+  const turma = await api("getTurma", { turmaId });
+  turmaAtualCache = turma;
+
+  const card = el(`
+    <div>
+      <button class="voltar" id="btnVoltar">← Voltar às turmas</button>
+      <div class="card">
+        <h2>${turma.cadeira} <small style="font-size:13px;color:var(--cinza);">(${turma.nome})</small></h2>
+        <p>Código de acesso dos estudantes: <span class="codigo">${turma.codigoAcesso}</span> &nbsp;|&nbsp;
+           Horário: ${fmtHorarios(turma.horarios)} · ${turma.duracaoMin} min</p>
+        <div class="tabs">
+          <button class="ativo" data-tab="aulas">Aulas &amp; Presenças</button>
+          <button data-tab="estudantes">Estudantes</button>
+          <button data-tab="estatisticas">Estatísticas</button>
+          <button data-tab="config">Configurações</button>
+        </div>
+        <div id="conteudoTab"></div>
+      </div>
+    </div>
+  `);
+  card.querySelector("#btnVoltar").onclick = () => carregarListaTurmas(root);
+  const tabs = card.querySelectorAll(".tabs button");
+  const conteudo = card.querySelector("#conteudoTab");
+  tabs.forEach(b => b.onclick = () => {
+    tabs.forEach(x => x.classList.remove("ativo"));
+    b.classList.add("ativo");
+    conteudo.innerHTML = "";
+    if (b.dataset.tab === "aulas") conteudo.appendChild(abaAulasDocente(turma));
+    if (b.dataset.tab === "estudantes") conteudo.appendChild(abaEstudantesDocente(turma));
+    if (b.dataset.tab === "estatisticas") conteudo.appendChild(abaEstatisticasDocente(turma));
+    if (b.dataset.tab === "config") conteudo.appendChild(abaConfigTurma(turma, root));
+  });
+  conteudo.appendChild(abaAulasDocente(turma));
+
+  root.innerHTML = "";
+  root.appendChild(card);
+}
+
+/* ---------- ABA AULAS ---------- */
+function abaAulasDocente(turma) {
+  const div = el(`
+    <div>
+      <div id="listaAulasArea">A carregar aulas...</div>
+    </div>
+  `);
+  (async () => {
+    const aulas = await api("listAulas", { turmaId: turma.id });
+    const area = div.querySelector("#listaAulasArea");
+    area.innerHTML = "";
+    const tabela = el(`
+      <table>
+        <thead><tr><th>Data</th><th>Horário</th><th>Estado</th><th>Ação</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    `);
+    const tbody = tabela.querySelector("tbody");
+    aulas.forEach(a => {
+      const tr = el(`
+        <tr>
+          <td>${a.data}${a.novaData ? " → " + a.novaData : ""}</td>
+          <td>${a.horaInicio} - ${a.horaFim}</td>
+          <td>${badge(a.status)}</td>
+          <td>
+            <button class="pequeno outline" data-abrir="${a.id}">Presenças</button>
+            <button class="pequeno outline" data-adiar="${a.id}">Adiar</button>
+            <button class="pequeno perigo" data-cancelar="${a.id}">Cancelar</button>
+          </td>
+        </tr>
+      `);
+      tbody.appendChild(tr);
+    });
+    area.appendChild(tabela);
+
+    tabela.querySelectorAll("[data-abrir]").forEach(btn => btn.onclick = () => {
+      area.innerHTML = "";
+      area.appendChild(painelPresencasAula(turma, btn.dataset.abrir, () => { area.innerHTML = ""; area.appendChild(abaAulasDocente(turma).firstChild || abaAulasDocente(turma)); }));
+    });
+    tabela.querySelectorAll("[data-cancelar]").forEach(btn => btn.onclick = async () => {
+      await api("setAulaStatus", { aulaId: btn.dataset.cancelar, status: "cancelada" });
+      div.innerHTML = ""; div.appendChild(abaAulasDocente(turma));
+    });
+    tabela.querySelectorAll("[data-adiar]").forEach(btn => btn.onclick = async () => {
+      const novaData = prompt("Nova data para esta aula (AAAA-MM-DD):");
+      if (!novaData) return;
+      await api("setAulaStatus", { aulaId: btn.dataset.adiar, status: "adiada", novaData });
+      div.innerHTML = ""; div.appendChild(abaAulasDocente(turma));
+    });
+  })();
+  return div;
+}
+
+function painelPresencasAula(turma, aulaId, aoVoltar) {
+  const div = el(`
+    <div>
+      <button class="voltar" id="btnVoltarPresencas">← Voltar à lista de aulas</button>
+      <div id="presencasConteudo">A carregar...</div>
+    </div>
+  `);
+  div.querySelector("#btnVoltarPresencas").onclick = aoVoltar;
+  (async () => {
+    const { aula, presencas } = await api("getPresencasAula", { aulaId });
+    const cont = div.querySelector("#presencasConteudo");
+    cont.innerHTML = `<h3>Presenças — ${aula.data} (${aula.horaInicio}-${aula.horaFim}) ${badge(aula.status)}</h3>`;
+    const tabela = el(`
+      <table>
+        <thead><tr><th>Estudante</th><th>Estado</th><th>Hora</th><th>Atraso (min)</th><th>Ação</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    `);
+    const tbody = tabela.querySelector("tbody");
+    presencas.forEach(p => {
+      const tr = el(`
+        <tr>
+          <td>${p.nomeEstudante}</td>
+          <td>${badge(p.status)}</td>
+          <td>${p.horaMarcacao || "-"}</td>
+          <td>${p.minutosAtraso === "" ? "-" : p.minutosAtraso}</td>
+          <td>
+            <button class="pequeno" data-presente="${p.estudanteId}">Marcar presente</button>
+            <button class="pequeno perigo" data-ausente="${p.estudanteId}">Marcar ausente</button>
+          </td>
+        </tr>
+      `);
+      tbody.appendChild(tr);
+    });
+    tabela.querySelectorAll("[data-presente]").forEach(btn => btn.onclick = async () => {
+      await api("marcarPresenca", { aulaId, estudanteId: btn.dataset.presente });
+      div.innerHTML = ""; div.appendChild(painelPresencasAula(turma, aulaId, aoVoltar));
+    });
+    tabela.querySelectorAll("[data-ausente]").forEach(btn => btn.onclick = async () => {
+      await api("marcarPresencaManual", { aulaId, estudanteId: btn.dataset.ausente, status: "ausente" });
+      div.innerHTML = ""; div.appendChild(painelPresencasAula(turma, aulaId, aoVoltar));
+    });
+    cont.appendChild(tabela);
+  })();
+  return div;
+}
+
+/* ---------- ABA ESTUDANTES ---------- */
+function abaEstudantesDocente(turma) {
+  const div = el(`
+    <div>
+      <div id="msgEst"></div>
+      <div class="grid2">
+        <div>
+          <label>Adicionar um estudante</label>
+          <input id="novoNomeEst" placeholder="Nome do estudante">
+          <button class="dourado" style="margin-top:10px;" id="btnAddEst">Adicionar</button>
+        </div>
+        <div>
+          <label>Adicionar vários (um nome por linha)</label>
+          <textarea id="novoBulkEst" rows="3" placeholder="Nome 1&#10;Nome 2&#10;Nome 3"></textarea>
+          <button class="dourado" style="margin-top:10px;" id="btnBulkEst">Adicionar todos</button>
+        </div>
+      </div>
+      <h3 style="margin-top:22px;">Lista de Estudantes</h3>
+      <div id="listaEst">A carregar...</div>
+    </div>
+  `);
+
+  async function recarregar() {
+    const estudantes = await api("listEstudantes", { turmaId: turma.id });
+    const area = div.querySelector("#listaEst");
+    if (estudantes.length === 0) { area.innerHTML = "<p style='color:var(--cinza)'>Nenhum estudante ainda.</p>"; return; }
+    const tabela = el(`
+      <table><thead><tr><th>Nome</th><th>Número</th><th>Ação</th></tr></thead><tbody></tbody></table>
+    `);
+    const tbody = tabela.querySelector("tbody");
+    estudantes.forEach(e => {
+      const tr = el(`
+        <tr>
+          <td>${e.nome}</td><td>${e.numero}</td>
+          <td>
+            <button class="pequeno outline" data-reset="${e.id}">Repor senha</button>
+            <button class="pequeno perigo" data-rem="${e.id}">Remover</button>
+          </td>
+        </tr>
+      `);
+      tbody.appendChild(tr);
+    });
+    area.innerHTML = ""; area.appendChild(tabela);
+    tabela.querySelectorAll("[data-rem]").forEach(b => b.onclick = async () => {
+      if (!confirm("Remover este estudante?")) return;
+      await api("removeEstudante", { estudanteId: b.dataset.rem });
+      recarregar();
+    });
+    tabela.querySelectorAll("[data-reset]").forEach(b => b.onclick = async () => {
+      const r = await api("resetSenhaEstudante", { estudanteId: b.dataset.reset });
+      alert("Nova senha: " + r.novaSenha);
+    });
+  }
+  recarregar();
+
+  div.querySelector("#btnAddEst").onclick = async () => {
+    const nome = div.querySelector("#novoNomeEst").value.trim();
+    if (!nome) return;
+    const r = await api("addEstudante", { turmaId: turma.id, nome });
+    mostrarSucesso(div, `Estudante adicionado. Nº: ${r.numero} · Senha inicial: ${r.senhaInicial}`);
+    div.querySelector("#novoNomeEst").value = "";
+    recarregar();
+  };
+  div.querySelector("#btnBulkEst").onclick = async () => {
+    const nomes = div.querySelector("#novoBulkEst").value.split("\n").map(s => s.trim()).filter(Boolean);
+    if (nomes.length === 0) return;
+    await api("bulkAddEstudantes", { turmaId: turma.id, nomes });
+    mostrarSucesso(div, `${nomes.length} estudantes adicionados (senha inicial: 1234).`);
+    div.querySelector("#novoBulkEst").value = "";
+    recarregar();
+  };
+  return div;
+}
+
+/* ---------- ABA ESTATÍSTICAS ---------- */
+function abaEstatisticasDocente(turma) {
+  const div = el(`<div id="statsArea">A carregar estatísticas...</div>`);
+  (async () => {
+    const stats = await api("getEstatisticasTurma", { turmaId: turma.id });
+    div.innerHTML = "";
+    const tabela = el(`
+      <table>
+        <thead><tr><th>Estudante</th><th>Nº</th><th>Aulas dadas</th><th>Presenças</th><th>Atrasos</th><th>Ausências</th><th>Frequência</th><th>Média atraso</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    `);
+    const tbody = tabela.querySelector("tbody");
+    stats.forEach(s => {
+      tbody.appendChild(el(`
+        <tr>
+          <td>${s.nome}</td><td>${s.numero}</td><td>${s.totalAulasDadas}</td>
+          <td>${s.presencas}</td><td>${s.atrasos}</td><td>${s.ausencias}</td>
+          <td>${s.frequenciaPercent}%</td><td>${s.mediaMinutosAtraso} min</td>
+        </tr>
+      `));
+    });
+    div.appendChild(tabela);
+  })();
+  return div;
+}
+
+/* ---------- ABA CONFIGURAÇÕES ---------- */
+function abaConfigTurma(turma, root) {
+  const div = el(`
+    <div>
+      <div class="grid2">
+        <div><label>Nome da turma</label><input id="cNome" value="${turma.nome}"></div>
+        <div><label>Nome da cadeira</label><input id="cCadeira" value="${turma.cadeira}"></div>
+      </div>
+      <div class="grid2">
+        <div><label>Duração da aula (min)</label><input id="cDuracao" type="number" value="${turma.duracaoMin}"></div>
+        <div><label>Tolerância de atraso (min)</label><input id="cTolerancia" type="number" value="${turma.toleranciaAtrasoMin}"></div>
+      </div>
+      <div class="grid2">
+        <div><label>Total de aulas previstas</label><input id="cTotal" type="number" value="${turma.totalAulas}"></div>
+        <div></div>
+      </div>
+      <p style="font-size:12px;color:var(--cinza);">Alterar o total de aulas ou a duração regenera as aulas futuras (as aulas já ocorridas não são afetadas).</p>
+      <button class="dourado" id="btnSalvarConfig">Guardar alterações</button>
+      <hr style="margin:24px 0;border:none;border-top:1px solid var(--borda);">
+      <button class="perigo" id="btnApagarTurma">Apagar turma definitivamente</button>
+    </div>
+  `);
+  div.querySelector("#btnSalvarConfig").onclick = async () => {
+    await api("updateTurma", {
+      turmaId: turma.id,
+      nome: div.querySelector("#cNome").value,
+      cadeira: div.querySelector("#cCadeira").value,
+      duracaoMin: parseInt(div.querySelector("#cDuracao").value, 10),
+      toleranciaAtrasoMin: parseInt(div.querySelector("#cTolerancia").value, 10),
+      totalAulas: parseInt(div.querySelector("#cTotal").value, 10),
+      regenerarAulas: true
+    });
+    mostrarSucesso(div, "Turma atualizada.");
+  };
+  div.querySelector("#btnApagarTurma").onclick = async () => {
+    if (!confirm("Tem a certeza? Esta ação é irreversível e apaga todos os dados da turma.")) return;
+    await api("deleteTurma", { turmaId: turma.id });
+    carregarListaTurmas(root);
+  };
+  return div;
+}
+
+/* ======================= PAINEL ESTUDANTE ======================= */
+function painelEstudante() {
+  const wrap = el(`<div id="estRoot"><div class="card">A carregar as suas presenças...</div></div>`);
+  (async () => {
+    const est = sessao.dados; // { id, nome, numero, turmaId, turmaNome, cadeira }
+    const [stats, turma, aulas] = await Promise.all([
+      api("getEstatisticasEstudante", { turmaId: est.turmaId, estudanteId: est.id }),
+      api("getTurma", { turmaId: est.turmaId }),
+      api("listAulas", { turmaId: est.turmaId })
+    ]);
+
+    wrap.innerHTML = "";
+    const cardInfo = el(`
+      <div class="card">
+        <h2>${est.cadeira}</h2>
+        <p style="color:var(--cinza);margin-top:-6px;">Turma: ${est.turmaNome} · Horário: ${fmtHorarios(turma.horarios)} · Duração: ${turma.duracaoMin} min</p>
+        <div class="grid3">
+          <div class="stat-box"><div class="num">${stats.frequenciaPercent}%</div><div class="lbl">Frequência</div></div>
+          <div class="stat-box"><div class="num">${stats.presencas}</div><div class="lbl">Presenças</div></div>
+          <div class="stat-box"><div class="num">${stats.atrasos}</div><div class="lbl">Atrasos</div></div>
+        </div>
+        <div class="grid3" style="margin-top:14px;">
+          <div class="stat-box"><div class="num">${stats.ausencias}</div><div class="lbl">Ausências</div></div>
+          <div class="stat-box"><div class="num">${stats.totalAulasDadas}</div><div class="lbl">Aulas dadas</div></div>
+          <div class="stat-box"><div class="num">${stats.mediaMinutosAtraso}</div><div class="lbl">Média atraso (min)</div></div>
+        </div>
+      </div>
+    `);
+    wrap.appendChild(cardInfo);
+
+    const cardAulas = el(`
+      <div class="card">
+        <h2>Registo de Aulas</h2>
+        <table>
+          <thead><tr><th>Data</th><th>Horário</th><th>Estado da aula</th><th>A sua presença</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    `);
+    const tbody = cardAulas.querySelector("tbody");
+
+    for (const a of aulas) {
+      let statusPresenca = "-";
+      try {
+        const { presencas } = await api("getPresencasAula", { aulaId: a.id });
+        const minha = presencas.find(p => p.estudanteId === est.id);
+        statusPresenca = minha ? badge(minha.status) + (minha.minutosAtraso ? ` <small>(${minha.minutosAtraso} min)</small>` : "") : "-";
+      } catch (e) { statusPresenca = "-"; }
+      tbody.appendChild(el(`
+        <tr>
+          <td>${a.data}${a.novaData ? " → " + a.novaData : ""}</td>
+          <td>${a.horaInicio} - ${a.horaFim}</td>
+          <td>${badge(a.status)}</td>
+          <td>${statusPresenca}</td>
+        </tr>
+      `));
+    }
+    wrap.appendChild(cardAulas);
+  })();
+  return wrap;
+}
+
+/* ======================= PAINEL ADMIN ======================= */
+function painelAdmin() {
+  const wrap = el(`<div class="card">A carregar dados administrativos...</div>`);
+  (async () => {
+    const dados = await api("adminListTudo", {});
+    wrap.innerHTML = `<h2>Painel de Administração</h2><div id="msgAdmin"></div>`;
+
+    const secTurmas = el(`<div><h3>Todas as Turmas</h3><table><thead><tr><th>Cadeira</th><th>Turma</th><th>Docente</th><th>Código</th><th>Ação</th></tr></thead><tbody></tbody></table></div>`);
+    const tbody = secTurmas.querySelector("tbody");
+    dados.turmas.forEach(t => {
+      const docente = dados.docentes.find(d => d.id === t.docenteId);
+      const tr = el(`
+        <tr>
+          <td>${t.cadeira}</td><td>${t.nome}</td>
+          <td>
+            <select data-turma="${t.id}">
+              ${dados.docentes.map(d => `<option value="${d.id}" ${d.id === t.docenteId ? "selected" : ""}>${d.nome}</option>`).join("")}
+            </select>
+          </td>
+          <td><span class="codigo">${t.codigoAcesso}</span></td>
+          <td><button class="pequeno perigo" data-del="${t.id}">Apagar</button></td>
+        </tr>
+      `);
+      tbody.appendChild(tr);
+    });
+    wrap.appendChild(secTurmas);
+
+    secTurmas.querySelectorAll("select[data-turma]").forEach(sel => sel.onchange = async () => {
+      await api("adminAssignDocente", { turmaId: sel.dataset.turma, docenteId: sel.value });
+      mostrarSucesso(wrap, "Docente responsável atualizado.");
+    });
+    secTurmas.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+      if (!confirm("Apagar esta turma e todos os seus dados?")) return;
+      await api("deleteTurma", { turmaId: b.dataset.del });
+      painelAdmin();
+      document.getElementById("app").innerHTML = "";
+      document.getElementById("app").appendChild(painelAdmin());
+    });
+
+    const secDocentes = el(`<div style="margin-top:24px;"><h3>Docentes Registados</h3><table><thead><tr><th>Nome</th><th>Email</th></tr></thead><tbody></tbody></table></div>`);
+    const tb2 = secDocentes.querySelector("tbody");
+    dados.docentes.forEach(d => tb2.appendChild(el(`<tr><td>${d.nome}</td><td>${d.email}</td></tr>`)));
+    wrap.appendChild(secDocentes);
+  })();
+  return wrap;
+}
+
+/* ======================= INÍCIO ======================= */
+render();
+</script>
+</body>
+</html>
