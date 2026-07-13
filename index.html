@@ -156,7 +156,7 @@
 <script>
 /* ======================= CONFIGURAÇÃO ======================= */
 // Cole aqui o URL do "App da Web" gerado pelo Google Apps Script (termina em /exec)
-const API_URL = "COLE_AQUI_O_URL_DO_SEU_APPS_SCRIPT";
+const API_URL = "https://script.google.com/macros/s/AKfycbzviw2_QLG437s5oX7p12ZQtGXvFkLjjH3-IboWMsYJYk3hO4uyf3wmHOm0HVQD3Skjuw/exec";
 
 /* ======================= ESTADO ======================= */
 let sessao = JSON.parse(localStorage.getItem("sispres_sessao") || "null");
@@ -165,7 +165,7 @@ let aulaSelecionadaId = null;
 
 /* ======================= API ======================= */
 async function api(action, payload = {}) {
-  if (API_URL.includes("COLE_AQUI")) {
+  if (API_URL.includes("https://script.google.com/macros/s/AKfycbzviw2_QLG437s5oX7p12ZQtGXvFkLjjH3-IboWMsYJYk3hO4uyf3wmHOm0HVQD3Skjuw/exec")) {
     alert("Configuração pendente: define o API_URL no topo do ficheiro index.html com o URL do teu Apps Script.");
     throw new Error("API_URL não configurado");
   }
