@@ -164,11 +164,8 @@ let turmaAtualCache = null;
 let aulaSelecionadaId = null;
 
 /* ======================= API ======================= */
+  
 async function api(action, payload = {}) {
-  if (API_URL.includes("https://script.google.com/macros/s/AKfycbzviw2_QLG437s5oX7p12ZQtGXvFkLjjH3-IboWMsYJYk3hO4uyf3wmHOm0HVQD3Skjuw/exec")) {
-    alert("Configuração pendente: define o API_URL no topo do ficheiro index.html com o URL do teu Apps Script.");
-    throw new Error("API_URL não configurado");
-  }
   const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -178,7 +175,7 @@ async function api(action, payload = {}) {
   if (!json.ok) throw new Error(json.error || "Erro desconhecido");
   return json.data;
 }
-
+  
 /* ======================= UTIL ======================= */
 function el(html) { const d = document.createElement("div"); d.innerHTML = html.trim(); return d.firstChild; }
 function fmtHorarios(horarios) {
