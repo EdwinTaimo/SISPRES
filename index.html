@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SISPRES · Sistema de Presenças da Universidade</title>
+<title>SISPRES · Sistema de Presenças — Universidade Licungo</title>
 <style>
   :root{
     --azul:#0b2545;
     --azul2:#13315c;
-    --dourado:#c9a24b;
-    --dourado-claro:#e6cf8a;
+    --dourado:#ffffff;
+    --dourado-claro:#dbe4f0;
     --bg:#f4f6fa;
     --branco:#ffffff;
     --texto:#1c2530;
@@ -31,8 +31,10 @@
   header.topo .brand{display:flex;align-items:center;gap:12px;}
   header.topo .brand .escudo{
     width:42px;height:42px;border-radius:50%;background:var(--dourado);
-    display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--azul);font-size:18px;
+    display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--azul);font-size:16px;
+    box-shadow:0 0 0 2px var(--azul2), 0 2px 6px rgba(0,0,0,.25);overflow:hidden;
   }
+  header.topo .brand .escudo img{width:100%;height:100%;object-fit:cover;}
   header.topo h1{font-size:18px;margin:0;letter-spacing:.5px;}
   header.topo small{opacity:.8;display:block;font-size:11px;}
   header.topo .userbox{font-size:13px;display:flex;align-items:center;gap:12px;}
@@ -63,7 +65,7 @@
     background:var(--azul);color:#fff;transition:.15s;
   }
   button:hover{background:var(--azul2);}
-  button.dourado{background:var(--dourado);color:var(--azul);}
+  button.dourado{background:var(--dourado);color:var(--azul);border:1.5px solid var(--azul);}
   button.dourado:hover{background:var(--dourado-claro);}
   button.outline{background:transparent;color:var(--azul);border:1px solid var(--azul);}
   button.outline:hover{background:var(--azul);color:#fff;}
@@ -136,11 +138,14 @@
 <body>
 
 <header class="topo">
+  <!-- Para usar o brasão oficial da Universidade Licungo: coloca o ficheiro logo.png
+       na mesma pasta deste index.html e troca a linha abaixo por:
+       <div class="escudo"><img src="logo.png" alt="Universidade Licungo"></div> -->
   <div class="brand">
-    <div class="escudo">UN</div>
+    <div class="escudo" id="escudoTopo">UL</div>
     <div>
       <h1>SISPRES — Sistema de Presenças</h1>
-      <small>Universidade · Controlo de Presenças em Sala de Aula</small>
+      <small>Universidade Licungo · Controlo de Presenças em Sala de Aula</small>
     </div>
   </div>
   <div class="userbox" id="userbox" style="display:none;">
@@ -156,7 +161,7 @@
 <script>
 /* ======================= CONFIGURAÇÃO ======================= */
 // Cole aqui o URL do "App da Web" gerado pelo Google Apps Script (termina em /exec)
-const API_URL = "https://script.google.com/macros/s/AKfycbzviw2_QLG437s5oX7p12ZQtGXvFkLjjH3-IboWMsYJYk3hO4uyf3wmHOm0HVQD3Skjuw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyhTQjdqNqOAKs1gJJImjPDzwChoTH0Hz7qSyaqocydAUtdD8_mq8HAuJUrBz6SnM209A/exec";
 
 /* ======================= ESTADO ======================= */
 let sessao = JSON.parse(localStorage.getItem("sispres_sessao") || "null");
@@ -164,8 +169,11 @@ let turmaAtualCache = null;
 let aulaSelecionadaId = null;
 
 /* ======================= API ======================= */
-  
 async function api(action, payload = {}) {
+  if (API_URL.includes("COLE_AQUI")) {
+    alert("Configuração pendente: define o API_URL no topo do ficheiro index.html com o URL do teu Apps Script.");
+    throw new Error("API_URL não configurado");
+  }
   const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -175,7 +183,7 @@ async function api(action, payload = {}) {
   if (!json.ok) throw new Error(json.error || "Erro desconhecido");
   return json.data;
 }
-  
+
 /* ======================= UTIL ======================= */
 function el(html) { const d = document.createElement("div"); d.innerHTML = html.trim(); return d.firstChild; }
 function fmtHorarios(horarios) {
@@ -183,6 +191,25 @@ function fmtHorarios(horarios) {
   return horarios.map(h => `${dias[h.dia]} ${h.inicio}`).join(", ");
 }
 function badge(status) { return `<span class="badge ${status}">${status}</span>`; }
+function exportarCSV(headers, linhas, nomeFicheiro) {
+  const escapar = v => `"${String(v).replace(/"/g, '""')}"`;
+  const csv = [headers.map(escapar).join(","), ...linhas.map(l => l.map(escapar).join(","))].join("\r\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = nomeFicheiro; document.body.appendChild(a); a.click();
+  a.remove(); URL.revokeObjectURL(url);
+}
+function baixarBase64(base64, nomeFicheiro, mime) {
+  const bytes = atob(base64);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  const blob = new Blob([arr], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = nomeFicheiro; document.body.appendChild(a); a.click();
+  a.remove(); URL.revokeObjectURL(url);
+}
 function salvarSessao() { localStorage.setItem("sispres_sessao", JSON.stringify(sessao)); }
 function sair() { sessao = null; localStorage.removeItem("sispres_sessao"); render(); }
 function mostrarErro(container, msg) {
@@ -224,9 +251,9 @@ function telaLogin() {
   const wrap = el(`
     <div class="login-wrap">
       <div class="card">
-        <div class="escudo-grande">UN</div>
+        <div class="escudo-grande" id="escudoLogin">UL</div>
         <h1>SISPRES</h1>
-        <p class="sub">Sistema de Presenças da Universidade</p>
+        <p class="sub">Universidade Licungo · Sistema de Presenças</p>
         <div class="role-switch">
           <button data-r="docente" class="ativo">Docente</button>
           <button data-r="estudante">Estudante</button>
@@ -560,7 +587,13 @@ function painelPresencasAula(turma, aulaId, aoVoltar) {
   (async () => {
     const { aula, presencas } = await api("getPresencasAula", { aulaId });
     const cont = div.querySelector("#presencasConteudo");
-    cont.innerHTML = `<h3>Presenças — ${aula.data} (${aula.horaInicio}-${aula.horaFim}) ${badge(aula.status)}</h3>`;
+    cont.innerHTML = `<h3>Presenças — ${aula.data} (${aula.horaInicio}-${aula.horaFim}) ${badge(aula.status)}</h3>
+      <button class="outline pequeno" id="btnExportCSVAula" style="margin-bottom:10px;">⬇ Exportar CSV</button>`;
+    cont.querySelector("#btnExportCSVAula").onclick = () => {
+      const headers = ["Estudante", "Estado", "Hora", "Atraso (min)"];
+      const linhas = presencas.map(p => [p.nomeEstudante, p.status, p.horaMarcacao || "-", p.minutosAtraso === "" ? "-" : p.minutosAtraso]);
+      exportarCSV(headers, linhas, `Presencas_${aula.data}.csv`);
+    };
     const tabela = el(`
       <table>
         <thead><tr><th>Estudante</th><th>Estado</th><th>Hora</th><th>Atraso (min)</th><th>Ação</th></tr></thead>
@@ -676,6 +709,17 @@ function abaEstatisticasDocente(turma) {
   (async () => {
     const stats = await api("getEstatisticasTurma", { turmaId: turma.id });
     div.innerHTML = "";
+
+    const acoes = el(`
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <button class="outline pequeno" id="btnExportCSV">⬇ Exportar CSV (Excel)</button>
+        <button class="outline pequeno" id="btnExportPDF">⬇ Baixar Relatório PDF</button>
+        <button class="outline pequeno" id="btnEmailRelatorio">✉ Enviar por Email</button>
+      </div>
+      <div id="msgStats"></div>
+    `);
+    div.appendChild(acoes);
+
     const tabela = el(`
       <table>
         <thead><tr><th>Estudante</th><th>Nº</th><th>Aulas dadas</th><th>Presenças</th><th>Atrasos</th><th>Ausências</th><th>Frequência</th><th>Média atraso</th></tr></thead>
@@ -693,6 +737,26 @@ function abaEstatisticasDocente(turma) {
       `));
     });
     div.appendChild(tabela);
+
+    acoes.querySelector("#btnExportCSV").onclick = () => {
+      const headers = ["Estudante", "Número", "Aulas dadas", "Presenças", "Atrasos", "Ausências", "Frequência (%)", "Média atraso (min)"];
+      const linhas = stats.map(s => [s.nome, s.numero, s.totalAulasDadas, s.presencas, s.atrasos, s.ausencias, s.frequenciaPercent, s.mediaMinutosAtraso]);
+      exportarCSV(headers, linhas, `Presencas_${turma.cadeira}.csv`);
+    };
+    acoes.querySelector("#btnExportPDF").onclick = async () => {
+      try {
+        const r = await api("gerarRelatorioPDF", { turmaId: turma.id });
+        baixarBase64(r.base64, r.filename, "application/pdf");
+      } catch (e) { mostrarErro(acoes, e.message); }
+    };
+    acoes.querySelector("#btnEmailRelatorio").onclick = async () => {
+      const email = prompt("Enviar relatório para qual email?", sessao.dados.email || "");
+      if (!email) return;
+      try {
+        await api("enviarRelatorioEmail", { turmaId: turma.id, emailDestino: email });
+        mostrarSucesso(acoes, "Relatório enviado para " + email + ".");
+      } catch (e) { mostrarErro(acoes, e.message); }
+    };
   })();
   return div;
 }
